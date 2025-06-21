@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import re
 import random
+import os
+import csv
 
 app = Flask(__name__)
 CORS(app)
@@ -52,38 +54,6 @@ TRANSLATION_DATA = {
             "analytical": {"translated": "analytique", "meaning": "analytical", "pronunciation": "ah-nah-lee-TEEK"}
         }
     },
-    "es": {  # Spanish
-        "beginner": {
-            "hello": {"translated": "hola", "meaning": "hello", "pronunciation": "OH-lah"},
-            "world": {"translated": "mundo", "meaning": "world", "pronunciation": "MOON-doh"},
-            "good": {"translated": "bueno", "meaning": "good", "pronunciation": "BWEH-noh"},
-            "morning": {"translated": "mañana", "meaning": "morning", "pronunciation": "mah-NYAH-nah"},
-            "thank": {"translated": "gracias", "meaning": "thank you", "pronunciation": "GRAH-see-ahs"}
-        },
-        "intermediate": {
-            "beautiful": {"translated": "hermoso", "meaning": "beautiful", "pronunciation": "ehr-MOH-soh"},
-            "important": {"translated": "importante", "meaning": "important", "pronunciation": "eem-por-TAHN-teh"}
-        },
-        "advanced": {
-            "sophisticated": {"translated": "sofisticado", "meaning": "sophisticated", "pronunciation": "soh-fee-stee-KAH-doh"}
-        }
-    },
-    "de": {  # German
-        "beginner": {
-            "hello": {"translated": "hallo", "meaning": "hello", "pronunciation": "HAH-loh"},
-            "world": {"translated": "welt", "meaning": "world", "pronunciation": "velt"},
-            "good": {"translated": "gut", "meaning": "good", "pronunciation": "goot"},
-            "morning": {"translated": "morgen", "meaning": "morning", "pronunciation": "MOR-gen"},
-            "thank": {"translated": "danke", "meaning": "thank you", "pronunciation": "DAHN-keh"}
-        },
-        "intermediate": {
-            "beautiful": {"translated": "schön", "meaning": "beautiful", "pronunciation": "shuhn"},
-            "important": {"translated": "wichtig", "meaning": "important", "pronunciation": "VIKH-tikh"}
-        },
-        "advanced": {
-            "sophisticated": {"translated": "anspruchsvoll", "meaning": "sophisticated", "pronunciation": "AHN-shrooks-foll"}
-        }
-    }
 }
 
 def extract_words(text):
@@ -119,23 +89,28 @@ def get_translations(words, level, target_language):
     """Get translations for words based on level and target language."""
     translations = []
     
-    if target_language not in TRANSLATION_DATA:
-        return translations
-    
-    level_data = TRANSLATION_DATA[target_language].get(level, {})
-    
-    for word in words:
-        if word in level_data:
-            translation_info = level_data[word]
+    csv_path = os.path.join(os.path.dirname(__file__), 'today.csv')
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader, None)  # Skip the header/date line
+        for row in reader:
+            if len(row) < 6 or not row[0].strip() or row[0].startswith('//'):
+                continue  # skip empty or comment lines
+            english = row[0].strip()
+            translated = row[1].strip()
+            meaning = row[2].strip()
+            pronunciation = row[3].strip()
+            # frequency = int(row[4].strip())
+            word_type = row[5].strip()
             translations.append({
-                "original": word,
-                "translated": translation_info["translated"],
-                "meaning": translation_info["meaning"],
-                "pronunciation": translation_info["pronunciation"]
+                'original': english,
+                'translated': translated,
+                'meaning': meaning,
+                'pronunciation': pronunciation,
+                'word_type': word_type
             })
     
-    # Limit to a reasonable number of translations to avoid overwhelming the user
-    return translations[:15]
+    return translations
 
 @app.route('/translate', methods=['POST'])
 def translate():
