@@ -48,6 +48,9 @@ class SpurHackedTranslator {
         
         // Listen for DOM changes
         this.observeDOMChanges();
+        
+        // Listen for copy events to replace translated text with original text
+        document.addEventListener('copy', (e) => this.handleCopyEvent(e));
     }
 
     async loadSettings() {
@@ -556,6 +559,75 @@ class SpurHackedTranslator {
             action: 'updateStats',
             count: count
         });
+    }
+
+    handleCopyEvent(e) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const range = selection.getRangeAt(0);
+        let selectedText = range.toString();
+        
+        // Check if the selection contains any translated words
+        let hasTranslatedWords = false;
+        let modifiedText = selectedText;
+        
+        // Find all translated word spans within the selection
+        const translatedSpans = range.cloneContents().querySelectorAll('.spurhacked-word');
+        
+        if (translatedSpans.length > 0) {
+            hasTranslatedWords = true;
+            
+            // Create a temporary container to work with the selection
+            const tempContainer = document.createElement('div');
+            tempContainer.appendChild(range.cloneContents());
+            
+            // Remove speaker buttons from the temporary container
+            const speakerButtons = tempContainer.querySelectorAll('.spurhacked-speaker-btn');
+            speakerButtons.forEach(button => button.remove());
+            
+            // Replace all translated words with their original text
+            const spansInTemp = tempContainer.querySelectorAll('.spurhacked-word');
+            spansInTemp.forEach(span => {
+                const originalText = span.getAttribute('data-original');
+                if (originalText) {
+                    // Preserve capitalization if the translated word was capitalized
+                    const translatedText = span.textContent;
+                    const isCapitalized = translatedText[0] === translatedText[0]?.toUpperCase();
+                    const replacementText = isCapitalized ? 
+                        originalText.charAt(0).toUpperCase() + originalText.slice(1) : 
+                        originalText;
+                    
+                    // Replace the span with the original text
+                    const textNode = document.createTextNode(replacementText);
+                    span.parentNode.replaceChild(textNode, span);
+                }
+            });
+            
+            // Get the modified text, ensuring we get clean text content
+            modifiedText = tempContainer.textContent || tempContainer.innerText;
+            
+            // Clean up any extra whitespace that might have been introduced
+            modifiedText = modifiedText.replace(/\s+/g, ' ').trim();
+        }
+        
+        // If we found translated words, modify the clipboard data
+        if (hasTranslatedWords) {
+            e.preventDefault();
+            
+            // Set the modified text to clipboard
+            if (e.clipboardData) {
+                e.clipboardData.setData('text/plain', modifiedText);
+                e.clipboardData.setData('text/html', modifiedText);
+            } else if (window.clipboardData) {
+                // Fallback for older browsers
+                window.clipboardData.setData('Text', modifiedText);
+            }
+            
+            console.log('SpurHacked: Copy intercepted - replaced translated text with original text');
+            console.log('SpurHacked: Original selection:', selectedText);
+            console.log('SpurHacked: Modified text:', modifiedText);
+        }
     }
 }
 
