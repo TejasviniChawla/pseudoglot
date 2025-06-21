@@ -1,0 +1,98 @@
+/* SpurHacked Language Learning Extension Styles */
+
+/* Tooltip styles */
+#spurhacked-tooltip {
+    position: fixed;
+    z-index: 10000;
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    max-width: 300px;
+    word-wrap: break-word;
+}
+
+/* Translated word styles */
+.spurhacked-word {
+    color: #2196F3 !important;
+    text-decoration: underline !important;
+    text-decoration-style: dotted !important;
+    cursor: help !important;
+    position: relative !important;
+    transition: all 0.2s ease !important;
+}
+
+.spurhacked-word:hover {
+    color: #1976D2 !important;
+    text-decoration-color: #1976D2 !important;
+    background-color: rgba(33, 150, 243, 0.1) !important;
+}
+
+/* Ensure translated words are visible */
+.spurhacked-word * {
+    color: inherit !important;
+    text-decoration: inherit !important;
+}
+
+/* Animation for new translations */
+@keyframes spurhacked-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spurhacked-word {
+    animation: spurhacked-fade-in 0.3s ease;
+}
+
+/* Responsive tooltip positioning */
+@media (max-width: 768px) {
+    #spurhacked-tooltip {
+        max-width: 250px;
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    #spurhacked-tooltip {
+        background: #222;
+        color: #fff;
+        border: 1px solid #444;
+    }
+    
+    .spurhacked-word {
+        color: #64B5F6 !important;
+    }
+    
+    .spurhacked-word:hover {
+        color: #42A5F5 !important;
+        background-color: rgba(100, 181, 246, 0.1) !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .spurhacked-word {
+        color: #0000FF !important;
+        text-decoration: underline solid !important;
+    }
+    
+    #spurhacked-tooltip {
+        background: #000;
+        color: #fff;
+        border: 2px solid #fff;
+    }
+} 
