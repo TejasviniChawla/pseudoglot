@@ -10,51 +10,6 @@ CORS(app)
 
 # Mock translation data for demonstration
 # In a real implementation, you would integrate with a translation API like Google Translate
-TRANSLATION_DATA = {
-    "fr": {  # French
-        "beginner": {
-            "hello": {"translated": "bonjour", "meaning": "hello", "pronunciation": "bohn-ZHOOR"},
-            "world": {"translated": "monde", "meaning": "world", "pronunciation": "mohnd"},
-            "good": {"translated": "bon", "meaning": "good", "pronunciation": "bohn"},
-            "morning": {"translated": "matin", "meaning": "morning", "pronunciation": "mah-TAN"},
-            "thank": {"translated": "merci", "meaning": "thank you", "pronunciation": "mehr-SEE"},
-            "you": {"translated": "vous", "meaning": "you", "pronunciation": "voo"},
-            "please": {"translated": "s'il vous plaît", "meaning": "please", "pronunciation": "seel voo PLEH"},
-            "yes": {"translated": "oui", "meaning": "yes", "pronunciation": "wee"},
-            "no": {"translated": "non", "meaning": "no", "pronunciation": "nohn"},
-            "water": {"translated": "eau", "meaning": "water", "pronunciation": "oh"},
-            "food": {"translated": "nourriture", "meaning": "food", "pronunciation": "noo-ree-TUUR"},
-            "time": {"translated": "temps", "meaning": "time", "pronunciation": "tahn"},
-            "day": {"translated": "jour", "meaning": "day", "pronunciation": "zhoor"},
-            "night": {"translated": "nuit", "meaning": "night", "pronunciation": "nwee"},
-            "house": {"translated": "maison", "meaning": "house", "pronunciation": "meh-ZOHN"},
-            "car": {"translated": "voiture", "meaning": "car", "pronunciation": "vwah-TUUR"},
-            "book": {"translated": "livre", "meaning": "book", "pronunciation": "LEE-vruh"},
-            "friend": {"translated": "ami", "meaning": "friend", "pronunciation": "ah-MEE"},
-            "family": {"translated": "famille", "meaning": "family", "pronunciation": "fah-MEE"},
-            "work": {"translated": "travail", "meaning": "work", "pronunciation": "trah-VAI"}
-        },
-        "intermediate": {
-            "beautiful": {"translated": "beau", "meaning": "beautiful", "pronunciation": "boh"},
-            "important": {"translated": "important", "meaning": "important", "pronunciation": "an-por-TAHN"},
-            "difficult": {"translated": "difficile", "meaning": "difficult", "pronunciation": "dee-fee-SEEL"},
-            "interesting": {"translated": "intéressant", "meaning": "interesting", "pronunciation": "an-teh-reh-SAHN"},
-            "possible": {"translated": "possible", "meaning": "possible", "pronunciation": "poh-see-BLUH"},
-            "necessary": {"translated": "nécessaire", "meaning": "necessary", "pronunciation": "neh-seh-SAIR"},
-            "different": {"translated": "différent", "meaning": "different", "pronunciation": "dee-feh-RAHN"},
-            "special": {"translated": "spécial", "meaning": "special", "pronunciation": "speh-syal"},
-            "modern": {"translated": "moderne", "meaning": "modern", "pronunciation": "moh-DAIRN"},
-            "traditional": {"translated": "traditionnel", "meaning": "traditional", "pronunciation": "trah-dee-syo-NEHL"}
-        },
-        "advanced": {
-            "sophisticated": {"translated": "sophistiqué", "meaning": "sophisticated", "pronunciation": "soh-fee-stee-KAY"},
-            "revolutionary": {"translated": "révolutionnaire", "meaning": "revolutionary", "pronunciation": "reh-voh-loo-syo-NAIR"},
-            "philosophical": {"translated": "philosophique", "meaning": "philosophical", "pronunciation": "fee-loh-soh-FEEK"},
-            "theoretical": {"translated": "théorique", "meaning": "theoretical", "pronunciation": "teh-oh-REEK"},
-            "analytical": {"translated": "analytique", "meaning": "analytical", "pronunciation": "ah-nah-lee-TEEK"}
-        }
-    },
-}
 
 def extract_words(text):
     """Extract words from text, filtering out common words and keeping only meaningful ones."""
