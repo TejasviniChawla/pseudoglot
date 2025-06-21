@@ -18,6 +18,14 @@
     word-wrap: break-word;
 }
 
+/* Container for translated word and speaker button */
+.spurhacked-word-container {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    position: relative !important;
+}
+
 /* Translated word styles */
 .spurhacked-word {
     color: #2196F3 !important;
@@ -32,6 +40,44 @@
     color: #1976D2 !important;
     text-decoration-color: #1976D2 !important;
     background-color: rgba(33, 150, 243, 0.1) !important;
+}
+
+/* Speaker button styles */
+.spurhacked-speaker-btn {
+    cursor: pointer !important;
+    font-size: 12px !important;
+    opacity: 0.7 !important;
+    transition: all 0.2s ease !important;
+    user-select: none !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin-left: 2px !important;
+}
+
+.spurhacked-speaker-btn:hover {
+    opacity: 1 !important;
+    transform: scale(1.1) !important;
+}
+
+.spurhacked-speaker-btn:active {
+    transform: scale(0.95) !important;
+}
+
+/* Animation for speaker button when playing */
+@keyframes spurhacked-speaker-pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.spurhacked-speaker-btn.playing {
+    animation: spurhacked-speaker-pulse 0.6s ease-in-out;
 }
 
 /* Ensure translated words are visible */
@@ -62,6 +108,10 @@
         max-width: 250px;
         font-size: 12px;
         padding: 6px 10px;
+    }
+    
+    .spurhacked-speaker-btn {
+        font-size: 10px !important;
     }
 }
 
@@ -94,5 +144,9 @@
         background: #000;
         color: #fff;
         border: 2px solid #fff;
+    }
+    
+    .spurhacked-speaker-btn {
+        opacity: 1 !important;
     }
 } 

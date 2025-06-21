@@ -239,6 +239,17 @@ class SpurHackedTranslator {
             translatedText = translatedText.charAt(0).toUpperCase() + translatedText.slice(1);
         }
 
+        // Create a container for the word and speaker button
+        const container = document.createElement('span');
+        container.className = 'spurhacked-word-container';
+        container.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            position: relative;
+        `;
+
+        // Create the translated word span
         const span = document.createElement('span');
         span.className = 'spurhacked-word';
         span.setAttribute('data-original', cleanWord);
@@ -254,11 +265,45 @@ class SpurHackedTranslator {
         `;
         span.textContent = translatedText;
 
-        // Add hover events
+        // Add hover events to the word span
         span.addEventListener('mouseenter', (e) => this.showTooltip(e, translation));
         span.addEventListener('mouseleave', () => this.hideTooltip());
 
-        return span;
+        // Create the speaker button
+        const speakerButton = document.createElement('span');
+        speakerButton.className = 'spurhacked-speaker-btn';
+        speakerButton.innerHTML = '🔊';
+        speakerButton.style.cssText = `
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+            user-select: none;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 2px;
+        `;
+
+        // Add hover effect to speaker button
+        speakerButton.addEventListener('mouseenter', () => {
+            speakerButton.style.opacity = '1';
+        });
+        speakerButton.addEventListener('mouseleave', () => {
+            speakerButton.style.opacity = '0.7';
+        });
+
+        // Add click event to speaker button (currently does nothing as requested)
+        speakerButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Play pronunciation of the translated word
+            this.playPronunciation(translation.translated, translation.pronunciation, speakerButton);
+        });
+
+        // Add both elements to the container
+        container.appendChild(span);
+        container.appendChild(speakerButton);
+
+        return container;
     }
 
     showTooltip(event, translation) {
@@ -287,6 +332,127 @@ class SpurHackedTranslator {
             this.tooltipElement.style.opacity = '0';
             this.tooltipElement.style.display = 'none';
         }
+    }
+
+    playPronunciation(text, pronunciation, speakerButton) {
+        console.log('SpurHacked: Playing pronunciation for:', text);
+        console.log('SpurHacked: Target language:', this.settings.targetLanguage);
+        
+        // Check if speech synthesis is supported
+        if (!window.speechSynthesis) {
+            console.warn('SpurHacked: Speech synthesis not supported in this browser');
+            this.showSpeechError(speakerButton, 'Speech synthesis not supported');
+            return;
+        }
+
+        // Check if speech synthesis is paused (common issue)
+        if (window.speechSynthesis.paused) {
+            console.log('SpurHacked: Speech synthesis was paused, resuming...');
+            window.speechSynthesis.resume();
+        }
+
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+
+        // Create a new speech utterance
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Set language based on target language
+        const languageMap = {
+            'fr': 'fr-FR',
+            'es': 'es-ES',
+            'de': 'de-DE',
+            'it': 'it-IT',
+            'pt': 'pt-PT',
+            'ru': 'ru-RU',
+            'ja': 'ja-JP',
+            'ko': 'ko-KR',
+            'zh': 'zh-CN',
+            'ar': 'ar-SA',
+            'hi': 'hi-IN',
+            'nl': 'nl-NL',
+            'sv': 'sv-SE',
+            'no': 'no-NO',
+            'da': 'da-DK',
+            'pl': 'pl-PL',
+            'tr': 'tr-TR',
+            'he': 'he-IL',
+            'th': 'th-TH',
+            'vi': 'vi-VN'
+        };
+
+        const targetLang = languageMap[this.settings.targetLanguage] || 'en-US';
+        
+        // Get available voices and try to find a matching voice
+        const voices = window.speechSynthesis.getVoices();
+        
+        // Try to find a voice for the target language
+        let selectedVoice = null;
+        
+        // First, try to find an exact match
+        selectedVoice = voices.find(voice => 
+            voice.lang.toLowerCase() === targetLang.toLowerCase() ||
+            voice.lang.toLowerCase().startsWith(targetLang.split('-')[0])
+        );
+        
+        if (selectedVoice) {
+            console.log('SpurHacked: Using voice:', selectedVoice.name, 'for language:', selectedVoice.lang);
+            utterance.voice = selectedVoice;
+        } else {
+            console.log('SpurHacked: Using default voice for language:', targetLang);
+            utterance.lang = targetLang;
+        }
+        
+        // Set speech properties
+        utterance.rate = 0.8; // Slightly slower for better pronunciation
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        // Add visual feedback to the speaker button
+        const originalContent = speakerButton.innerHTML;
+        speakerButton.innerHTML = '🔊';
+        speakerButton.style.opacity = '1';
+        speakerButton.classList.add('playing');
+
+        // Play the speech
+        utterance.onstart = () => {
+            console.log('SpurHacked: Pronunciation started for:', text);
+        };
+
+        utterance.onend = () => {
+            // Reset button appearance
+            speakerButton.innerHTML = originalContent;
+            speakerButton.classList.remove('playing');
+            speakerButton.style.opacity = '0.7';
+            console.log('SpurHacked: Pronunciation finished for:', text);
+        };
+
+        utterance.onerror = (event) => {
+            console.error('SpurHacked: Speech synthesis error:', event.error);
+            this.showSpeechError(speakerButton, `Speech error: ${event.error}`);
+        };
+
+        // Speak the text
+        try {
+            window.speechSynthesis.speak(utterance);
+        } catch (error) {
+            console.error('SpurHacked: Error starting speech synthesis:', error);
+            this.showSpeechError(speakerButton, `Start error: ${error.message}`);
+        }
+    }
+
+    showSpeechError(speakerButton, message) {
+        console.error('SpurHacked:', message);
+        const originalContent = speakerButton.innerHTML;
+        speakerButton.innerHTML = '❌';
+        speakerButton.style.opacity = '1';
+        speakerButton.classList.remove('playing');
+        
+        // Reset after 2 seconds
+        setTimeout(() => {
+            speakerButton.innerHTML = originalContent;
+            speakerButton.style.opacity = '0.7';
+        }, 2000);
     }
 
     removeTranslations() {
