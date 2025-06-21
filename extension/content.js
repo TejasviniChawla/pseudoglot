@@ -176,7 +176,10 @@ class SpurHackedTranslator {
                         parent.tagName === 'SCRIPT' || 
                         parent.tagName === 'STYLE' || 
                         parent.tagName === 'NOSCRIPT' ||
-                        parent.classList.contains('spurhacked-translated')) {
+                        parent.id === 'spurhacked-tooltip' ||
+                        parent.classList.contains('spurhacked-translated') ||
+                        parent.classList.contains('spurhacked-word') ||
+                        parent.classList.contains('spurhacked-word-container')) {
                         return NodeFilter.FILTER_REJECT;
                     }
                     return NodeFilter.FILTER_ACCEPT;
@@ -197,6 +200,19 @@ class SpurHackedTranslator {
     }
 
     processTextNode(textNode) {
+        // Skip if this text node is already part of a translated element
+        let parent = textNode.parentElement;
+        while (parent) {
+            if (parent.classList.contains('spurhacked-translated') ||
+                parent.classList.contains('spurhacked-word') ||
+                parent.classList.contains('spurhacked-word-container') ||
+                parent.classList.contains('spurhacked-speaker-btn') ||
+                parent.id === 'spurhacked-tooltip') {
+                return; // Skip already translated elements
+            }
+            parent = parent.parentElement;
+        }
+
         const text = textNode.textContent;
         const words = text.split(/(\s+)/);
         let hasChanges = false;
@@ -307,6 +323,10 @@ class SpurHackedTranslator {
     }
 
     showTooltip(event, translation) {
+        console.log('SpurHacked: Tooltip translation object:', translation);
+        console.log('SpurHacked: Original word:', translation.original);
+        console.log('SpurHacked: Translated word:', translation.translated);
+        
         const tooltip = this.tooltipElement;
         tooltip.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 4px; color: #fff;">${translation.original} → ${translation.translated}</div>
@@ -492,6 +512,18 @@ class SpurHackedTranslator {
                 if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                     // Check if new text nodes were added
                     mutation.addedNodes.forEach(node => {
+                        // Skip if the node is already translated or contains translated elements
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const element = node;
+                            if (element.classList.contains('spurhacked-translated') ||
+                                element.classList.contains('spurhacked-word') ||
+                                element.classList.contains('spurhacked-word-container') ||
+                                element.querySelector('.spurhacked-translated') ||
+                                element.querySelector('.spurhacked-word')) {
+                                return; // Skip already translated elements
+                            }
+                        }
+                        
                         if (node.nodeType === Node.TEXT_NODE || 
                             (node.nodeType === Node.ELEMENT_NODE && node.textContent)) {
                             shouldProcess = true;
