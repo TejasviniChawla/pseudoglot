@@ -1,4 +1,6 @@
-// Content script for SpurHacked Language Learning extension
+// Merged content script for SpurHacked Language Learning extension
+// Combines: hover‑frequency tracking, copy‑intercept, robust DOM filtering,
+// pronunciation, tooltip, dynamic content observer, and stats updates
 
 class SpurHackedTranslator {
     constructor() {
@@ -7,56 +9,62 @@ class SpurHackedTranslator {
             learningLevel: 'beginner',
             translationEnabled: false
         };
-        this.translations = new Map();
-        this.translatedWords = new Set();
-        this.tooltipElement = null;
-        this.isProcessing = false;
-        
+
+        // === Combined state ===
+        this.hoveredWords      = new Set();   // from v1 – track first‑time hovers
+        this.translations      = new Map();
+        this.translatedWords   = new Set();
+        this.tooltipElement    = null;
+        this.isProcessing      = false;
+        this.processTimeout    = null;        // debounce handle
+
         this.init();
     }
 
+    /* ------------------------------------------------------------------
+       🏁  INITIALISATION
+    ------------------------------------------------------------------ */
     async init() {
-        // Load settings
         await this.loadSettings();
-        
-        // Create tooltip element
         this.createTooltip();
-        
-        // Start processing if enabled
+
+        // run once if enabled
         if (this.settings.translationEnabled) {
             this.processPage();
         }
-        
-        // Listen for messages from popup
-        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
+        /* 🎧 Listen for settings messages from popup */
+        chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
             if (request.action === 'settingsUpdated') {
                 this.settings = request.settings;
-                if (this.settings.translationEnabled) {
-                    this.processPage();
-                } else {
-                    this.removeTranslations();
-                }
             } else if (request.action === 'translationToggled') {
                 this.settings.translationEnabled = request.enabled;
-                if (request.enabled) {
-                    this.processPage();
-                } else {
-                    this.removeTranslations();
-                }
+            }
+
+            if (this.settings.translationEnabled) {
+                this.processPage();
+            } else {
+                this.removeTranslations();
             }
         });
-        
-        // Listen for DOM changes
+
+        // 👀 React to DOM mutations (SPA / dynamic pages)
         this.observeDOMChanges();
+
+        // 📋 Intercept copy to strip translated text
+        document.addEventListener('copy', e => this.handleCopyEvent(e));
     }
 
+    /* ------------------------------------------------------------------
+       🔧  SETTINGS & TOOLTIP
+    ------------------------------------------------------------------ */
     async loadSettings() {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
             chrome.storage.sync.get({
                 targetLanguage: 'fr',
-                learningLevel: 'beginner',
+                learningLevel : 'beginner',
                 translationEnabled: false
-            }, (items) => {
+            }, items => {
                 this.settings = items;
                 resolve();
             });
@@ -67,219 +75,206 @@ class SpurHackedTranslator {
         this.tooltipElement = document.createElement('div');
         this.tooltipElement.id = 'spurhacked-tooltip';
         this.tooltipElement.style.cssText = `
-            position: absolute;
-            z-index: 10000;
-            background: #333;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: Arial, sans-serif;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            max-width: 300px;
-            word-wrap: break-word;
-            display: none;
-            border: 1px solid #555;
-        `;
+            position: absolute; z-index: 10000; background:#333; color:#fff;
+            padding:8px 12px; border-radius:6px; font:14px/1.4 Arial,sans-serif;
+            box-shadow:0 4px 12px rgba(0,0,0,.3); pointer-events:none; opacity:0;
+            transition:opacity .2s ease; max-width:300px; word-wrap:break-word;
+            display:none; border:1px solid #555;`;
         document.body.appendChild(this.tooltipElement);
     }
 
+    /* ------------------------------------------------------------------
+       🚀  MAIN PIPELINE
+    ------------------------------------------------------------------ */
     async processPage() {
         if (this.isProcessing) return;
         this.isProcessing = true;
 
         try {
-            // Extract text from the page
             const pageText = this.extractPageText();
-            
             if (!pageText.trim()) {
                 console.log('SpurHacked: No text found on page');
                 return;
             }
 
-            // Get translations from backend
             const translations = await this.getTranslations(pageText);
-            
-            if (translations && translations.length > 0) {
+            if (translations.length) {
                 this.translations.clear();
-                translations.forEach(t => {
-                    this.translations.set(t.original.toLowerCase(), t);
-                });
-                
-                // Apply translations to the page
+                translations.forEach(t => this.translations.set(t.original.toLowerCase(), t));
                 this.applyTranslations();
-                
-                // Update stats
                 this.updateStats();
             }
-        } catch (error) {
-            console.error('SpurHacked: Error processing page:', error);
+        } catch (err) {
+            console.error('SpurHacked: Error processing page:', err);
         } finally {
             this.isProcessing = false;
         }
     }
 
     extractPageText() {
-        // Get text from body, excluding script and style elements
         const body = document.body;
         if (!body) return '';
-
-        // Clone body to avoid modifying the original
         const clone = body.cloneNode(true);
-        
-        // Remove script and style elements
-        const scripts = clone.querySelectorAll('script, style, noscript, iframe, img, svg, canvas');
-        scripts.forEach(el => el.remove());
-
+        clone.querySelectorAll('script,style,noscript,iframe,img,svg,canvas').forEach(el => el.remove());
         return clone.innerText || clone.textContent || '';
     }
 
     async getTranslations(text) {
         try {
-            const response = await fetch('http://localhost:5001/translate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    text: text,
-                    level: this.settings.learningLevel,
-                    targetLanguage: this.settings.targetLanguage
+            const res = await fetch('http://localhost:5001/translate', {
+                method : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body   : JSON.stringify({
+                    text,
+                    level          : this.settings.learningLevel,
+                    targetLanguage : this.settings.targetLanguage
                 })
             });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
             return data.translations || [];
-        } catch (error) {
-            console.error('SpurHacked: Error fetching translations:', error);
+        } catch (err) {
+            console.error('SpurHacked: Error fetching translations:', err);
             return [];
         }
     }
 
+    /* ------------------------------------------------------------------
+       ✨  APPLY TRANSLATIONS TO DOM
+    ------------------------------------------------------------------ */
     applyTranslations() {
-        // Walk through all text nodes in the document
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
             {
-                acceptNode: function(node) {
-                    // Skip if parent is script, style, or already processed
+                acceptNode: node => {
                     const parent = node.parentElement;
-                    if (!parent || 
-                        parent.tagName === 'SCRIPT' || 
-                        parent.tagName === 'STYLE' || 
-                        parent.tagName === 'NOSCRIPT' ||
-                        parent.classList.contains('spurhacked-translated')) {
-                        return NodeFilter.FILTER_REJECT;
-                    }
+                    if (!parent) return NodeFilter.FILTER_REJECT;
+
+                    // Skip unwanted parents / already processed nodes
+                    if (['SCRIPT','STYLE','NOSCRIPT'].includes(parent.tagName)) return NodeFilter.FILTER_REJECT;
+                    if (parent.id === 'spurhacked-tooltip')                        return NodeFilter.FILTER_REJECT;
+                    if (parent.classList.contains('spurhacked-translated') ||
+                        parent.classList.contains('spurhacked-word') ||
+                        parent.classList.contains('spurhacked-word-container'))  return NodeFilter.FILTER_REJECT;
+
                     return NodeFilter.FILTER_ACCEPT;
                 }
             }
         );
 
-        const textNodes = [];
-        let node;
-        while (node = walker.nextNode()) {
-            textNodes.push(node);
-        }
-
-        // Process each text node
-        textNodes.forEach(textNode => {
-            this.processTextNode(textNode);
-        });
+        const nodes = [];
+        let n; while ((n = walker.nextNode())) nodes.push(n);
+        nodes.forEach(tn => this.processTextNode(tn));
     }
 
     processTextNode(textNode) {
-        const text = textNode.textContent;
-        const words = text.split(/(\s+)/);
-        let hasChanges = false;
+        // Abort if ancestor already processed
+        for (let p = textNode.parentElement; p; p = p.parentElement) {
+            if (p.classList && (p.classList.contains('spurhacked-translated') ||
+                                p.classList.contains('spurhacked-word') ||
+                                p.classList.contains('spurhacked-word-container') ||
+                                p.classList.contains('spurhacked-speaker-btn'))) return;
+            if (p.id === 'spurhacked-tooltip') return;
+        }
 
-        const newWords = words.map(word => {
-            const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
-            const translation = this.translations.get(cleanWord);
-            
-            if (translation && !this.translatedWords.has(textNode)) {
-                hasChanges = true;
-                return this.createTranslatedWord(word, translation);
+        const words = textNode.textContent.split(/(\s+)/);
+        let changed = false;
+        const pieces = words.map(w => {
+            const key = w.replace(/[^\w]/g,'').toLowerCase();
+            const t   = this.translations.get(key);
+            if (t) {
+                changed = true;
+                return this.createTranslatedWord(w,t);
             }
-            return word;
+            return w;
         });
 
-        if (hasChanges) {
-            const wrapper = document.createElement('span');
-            wrapper.className = 'spurhacked-translated';
-            
-            // Add each word to the wrapper
-            newWords.forEach(word => {
-                if (typeof word === 'string') {
-                    wrapper.appendChild(document.createTextNode(word));
-                } else {
-                    wrapper.appendChild(word);
-                }
-            });
-            
-            textNode.parentNode.replaceChild(wrapper, textNode);
-            this.translatedWords.add(wrapper);
-        }
+        if (!changed) return;
+
+        const wrap = document.createElement('span');
+        wrap.className = 'spurhacked-translated';
+        pieces.forEach(p => {
+            if (typeof p === 'string') wrap.appendChild(document.createTextNode(p));
+            else                        wrap.appendChild(p);
+        });
+        textNode.parentNode.replaceChild(wrap, textNode);
+        this.translatedWords.add(wrap);
     }
 
+    /* ------------------------------------------------------------------
+       🏷️  CREATE MARKED‑UP WORD (with hover + speaker)
+    ------------------------------------------------------------------ */
     createTranslatedWord(originalWord, translation) {
-        const cleanWord = originalWord.replace(/[^\w]/g, '').toLowerCase();
-        const isCapitalized = originalWord[0] === originalWord[0]?.toUpperCase();
-        
-        let translatedText = translation.translated;
-        if (isCapitalized) {
-            translatedText = translatedText.charAt(0).toUpperCase() + translatedText.slice(1);
+        const clean   = originalWord.replace(/[^\w]/g,'').toLowerCase();
+        let transText = translation.translated;
+        if (originalWord[0] === originalWord[0]?.toUpperCase()) {
+            transText = transText.charAt(0).toUpperCase() + transText.slice(1);
         }
+
+        const container = document.createElement('span');
+        container.className = 'spurhacked-word-container';
+        container.style.cssText = 'display:inline-flex;align-items:center;gap:2px;position:relative;';
 
         const span = document.createElement('span');
         span.className = 'spurhacked-word';
-        span.setAttribute('data-original', cleanWord);
-        span.setAttribute('data-translation', translation.translated);
-        span.setAttribute('data-meaning', translation.meaning);
-        span.setAttribute('data-pronunciation', translation.pronunciation);
-        span.style.cssText = `
-            color: #2196F3;
-            text-decoration: underline;
-            text-decoration-style: dotted;
-            cursor: help;
-            position: relative;
-        `;
-        span.textContent = translatedText;
+        span.dataset.original      = clean;
+        span.dataset.translation   = translation.translated;
+        span.dataset.meaning       = translation.meaning;
+        span.dataset.pronunciation = translation.pronunciation;
+        span.style.cssText = 'color:#2196F3;text-decoration:underline dotted;cursor:help;position:relative;';
+        span.textContent  = transText;
 
-        // Add hover events
-        span.addEventListener('mouseenter', (e) => this.showTooltip(e, translation));
+        // Hover handlers – tooltip + frequency tracking (from v1)
+        span.addEventListener('mouseenter', e => {
+            this.showTooltip(e, translation);
+            const eng = translation.original.toLowerCase();
+            if (!this.hoveredWords.has(eng)) {
+                this.hoveredWords.add(eng);
+                fetch('http://localhost:5001/api/hover', {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({english:eng})
+                }).catch(err=>console.warn('SpurHacked: hover freq error', err));
+            }
+        });
         span.addEventListener('mouseleave', () => this.hideTooltip());
 
-        return span;
+        // 🔊 speaker
+        const speaker = document.createElement('span');
+        speaker.className = 'spurhacked-speaker-btn';
+        speaker.innerHTML = '🔊';
+        speaker.style.cssText = 'cursor:pointer;font-size:12px;opacity:.7;transition:opacity .2s ease;user-select:none;vertical-align:middle;margin-left:2px;';
+        speaker.addEventListener('mouseenter', () => { speaker.style.opacity = '1'; });
+        speaker.addEventListener('mouseleave', () => { speaker.style.opacity = '.7'; });
+        speaker.addEventListener('click', e => {
+            e.stopPropagation();
+            this.playPronunciation(translation.translated, translation.pronunciation, speaker);
+        });
+
+        container.append(span,speaker);
+        return container;
     }
 
-    showTooltip(event, translation) {
-        const tooltip = this.tooltipElement;
-        tooltip.innerHTML = `
-            <div style="font-weight: bold; margin-bottom: 4px; color: #fff;">${translation.original} → ${translation.translated}</div>
-            <div style="margin-bottom: 2px; color: #fff;"><strong>Meaning:</strong> ${translation.meaning}</div>
-            <div style="color: #fff;"><strong>Pronunciation:</strong> ${translation.pronunciation}</div>
-        `;
-        
-        const rect = event.target.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-        
-        tooltip.style.left = (rect.left + scrollLeft) + 'px';
-        tooltip.style.top = (rect.bottom + scrollTop + 5) + 'px';
-        tooltip.style.opacity = '1';
-        tooltip.style.zIndex = '10000';
-        tooltip.style.display = 'block';
-        
-        console.log('SpurHacked: Tooltip shown for', translation.original);
+    /* ------------------------------------------------------------------
+       🛈  TOOLTIP
+    ------------------------------------------------------------------ */
+    showTooltip(evt, tr) {
+        const tt = this.tooltipElement;
+        tt.innerHTML = `
+            <div style="font-weight:bold;margin-bottom:4px;color:#fff;">${tr.original} → ${tr.translated}</div>
+            <div style="margin-bottom:2px;color:#fff;"><strong>Meaning:</strong> ${tr.meaning}</div>
+            <div style="color:#fff;"><strong>Pronunciation:</strong> ${tr.pronunciation}</div>`;
+
+        const rect  = evt.target.getBoundingClientRect();
+        const top   = rect.bottom + (window.pageYOffset||document.documentElement.scrollTop) + 5;
+        const left  = rect.left   + (window.pageXOffset||document.documentElement.scrollLeft);
+        tt.style.top = `${top}px`;
+        tt.style.left= `${left}px`;
+        tt.style.opacity = '1';
+        tt.style.display = 'block';
+
+        console.log('SpurHacked: Tooltip shown for', tr.original);
     }
 
     hideTooltip() {
@@ -289,83 +284,145 @@ class SpurHackedTranslator {
         }
     }
 
+    /* ------------------------------------------------------------------
+       🔈  PRONUNCIATION via SpeechSynthesis
+    ------------------------------------------------------------------ */
+    playPronunciation(text, _pron, btn) {
+        if (!window.speechSynthesis) {
+            this.showSpeechError(btn,'Speech synthesis not supported');
+            return;
+        }
+
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+        window.speechSynthesis.cancel();
+
+        const utter = new SpeechSynthesisUtterance(text);
+        const map   = {
+            fr:'fr-FR', es:'es-ES', de:'de-DE', it:'it-IT', pt:'pt-PT', ru:'ru-RU',
+            ja:'ja-JP', ko:'ko-KR', zh:'zh-CN', ar:'ar-SA', hi:'hi-IN', nl:'nl-NL',
+            sv:'sv-SE', no:'no-NO', da:'da-DK', pl:'pl-PL', tr:'tr-TR', he:'he-IL',
+            th:'th-TH', vi:'vi-VN'
+        };
+        const langCode = map[this.settings.targetLanguage] || 'en-US';
+        const voices   = window.speechSynthesis.getVoices();
+        const voice    = voices.find(v => v.lang.toLowerCase() === langCode.toLowerCase() ||
+                                          v.lang.toLowerCase().startsWith(langCode.split('-')[0]));
+        if (voice) utter.voice = voice; else utter.lang = langCode;
+        utter.rate = .8;
+
+        // visual feedback
+        const orig = btn.innerHTML;
+        btn.innerHTML = '🔊';
+        btn.style.opacity = '1';
+        btn.classList.add('playing');
+
+        utter.onend   = () => { btn.innerHTML = orig; btn.style.opacity='.7'; btn.classList.remove('playing'); };
+        utter.onerror = e   => { this.showSpeechError(btn, `Speech error: ${e.error}`); };
+
+        try { window.speechSynthesis.speak(utter); }
+        catch(err) { this.showSpeechError(btn, `Start error: ${err.message}`); }
+    }
+
+    showSpeechError(btn,msg) {
+        console.error('SpurHacked:', msg);
+        const orig = btn.innerHTML;
+        btn.innerHTML = '❌';
+        btn.style.opacity = '1';
+        btn.classList.remove('playing');
+        setTimeout(()=>{ btn.innerHTML = orig; btn.style.opacity='.7'; },2000);
+    }
+
+    /* ------------------------------------------------------------------
+       ❌  REMOVE TRANSLATIONS
+    ------------------------------------------------------------------ */
     removeTranslations() {
-        // Remove all translated words and restore original text
-        const translatedElements = document.querySelectorAll('.spurhacked-word');
-        translatedElements.forEach(element => {
-            const originalWord = element.getAttribute('data-original');
-            element.textContent = originalWord;
-            element.className = '';
-            element.removeAttribute('style');
-            element.removeAttribute('data-original');
-            element.removeAttribute('data-translation');
-            element.removeAttribute('data-meaning');
-            element.removeAttribute('data-pronunciation');
+        document.querySelectorAll('.spurhacked-word').forEach(el => {
+            const orig = el.dataset.original;
+            el.replaceWith(document.createTextNode(orig));
         });
-
-        // Remove wrapper spans
-        const wrappers = document.querySelectorAll('.spurhacked-translated');
-        wrappers.forEach(wrapper => {
-            const parent = wrapper.parentNode;
-            if (parent) {
-                parent.replaceChild(document.createTextNode(wrapper.textContent), wrapper);
-            }
+        document.querySelectorAll('.spurhacked-translated').forEach(w => {
+            w.replaceWith(document.createTextNode(w.textContent));
         });
-
         this.translatedWords.clear();
         this.translations.clear();
     }
 
+    /* ------------------------------------------------------------------
+       🔄  MUTATION OBSERVER (debounced)
+    ------------------------------------------------------------------ */
     observeDOMChanges() {
-        // Observe DOM changes to handle dynamic content
-        const observer = new MutationObserver((mutations) => {
+        const obs = new MutationObserver(muts => {
             if (!this.settings.translationEnabled) return;
-
-            let shouldProcess = false;
-            mutations.forEach(mutation => {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    // Check if new text nodes were added
-                    mutation.addedNodes.forEach(node => {
-                        if (node.nodeType === Node.TEXT_NODE || 
-                            (node.nodeType === Node.ELEMENT_NODE && node.textContent)) {
-                            shouldProcess = true;
+            let should = false;
+            muts.forEach(m => {
+                if (m.type === 'childList' && m.addedNodes.length) {
+                    m.addedNodes.forEach(node => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const el = node;
+                            if (el.classList.contains('spurhacked-translated') ||
+                                el.classList.contains('spurhacked-word') ||
+                                el.classList.contains('spurhacked-word-container') ||
+                                el.querySelector('.spurhacked-translated') ||
+                                el.querySelector('.spurhacked-word')) return;
                         }
+                        if (node.nodeType === Node.TEXT_NODE || (node.textContent)) should = true;
                     });
                 }
             });
-
-            if (shouldProcess) {
-                // Debounce the processing
+            if (should) {
                 clearTimeout(this.processTimeout);
-                this.processTimeout = setTimeout(() => {
-                    this.processPage();
-                }, 1000);
+                this.processTimeout = setTimeout(() => this.processPage(), 1000);
             }
         });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+        obs.observe(document.body, { childList:true, subtree:true });
     }
 
+    /* ------------------------------------------------------------------
+       📈  STATS
+    ------------------------------------------------------------------ */
     updateStats() {
         const count = this.translations.size;
         chrome.storage.sync.set({ wordsTranslated: count });
-        
-        // Notify popup
-        chrome.runtime.sendMessage({
-            action: 'updateStats',
-            count: count
+        chrome.runtime.sendMessage({ action:'updateStats', count });
+    }
+
+    /* ------------------------------------------------------------------
+       📋  COPY INTERCEPT (replace translated words with originals)
+    ------------------------------------------------------------------ */
+    handleCopyEvent(e) {
+        const sel = window.getSelection();
+        if (!sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+
+        const fragment = range.cloneContents();
+        const hasTranslated = fragment.querySelector('.spurhacked-word');
+        if (!hasTranslated) return; // nothing to fix
+
+        // Remove speaker buttons, revert words
+        fragment.querySelectorAll('.spurhacked-speaker-btn').forEach(b => b.remove());
+        fragment.querySelectorAll('.spurhacked-word').forEach(sp => {
+            const orig = sp.dataset.original;
+            const txt  = sp.textContent;
+            const cap  = txt[0] === txt[0]?.toUpperCase();
+            const repl = cap ? orig.charAt(0).toUpperCase()+orig.slice(1) : orig;
+            sp.replaceWith(document.createTextNode(repl));
         });
+
+        let txtOut = fragment.textContent.replace(/\s+/g,' ').trim();
+        e.preventDefault();
+        if (e.clipboardData) {
+            e.clipboardData.setData('text/plain', txtOut);
+            e.clipboardData.setData('text/html', txtOut);
+        } else if (window.clipboardData) {
+            window.clipboardData.setData('Text', txtOut);
+        }
+        console.log('SpurHacked: Copy intercepted – replaced translations with originals');
     }
 }
 
-// Initialize the translator when the page is fully loaded
+// Boot when DOM ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        new SpurHackedTranslator();
-    });
+    document.addEventListener('DOMContentLoaded', () => new SpurHackedTranslator());
 } else {
     new SpurHackedTranslator();
-} 
+}

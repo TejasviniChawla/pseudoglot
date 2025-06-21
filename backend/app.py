@@ -67,6 +67,42 @@ def get_translations(words, level, target_language):
     
     return translations
 
+@app.route('/api/hover', methods=['POST'])
+def hover_word():
+    data = request.get_json()
+    english_word = data.get('english')
+    if not english_word:
+        return jsonify({'error': 'No word provided'}), 400
+
+    csv_path = os.path.join(os.path.dirname(__file__), 'today.csv')
+    updated = False
+    rows = []
+
+    # Read and update frequency
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        reader = list(csv.reader(csvfile))
+        for i, row in enumerate(reader):
+            if i == 0 or len(row) < 6 or not row[0].strip() or row[0].startswith('//'):
+                rows.append(row)
+                continue
+            if row[0].strip().lower() == english_word.lower():
+                try:
+                    freq = int(row[4].strip())
+                except Exception:
+                    freq = 0
+                row[4] = str(freq + 1)
+                updated = True
+            rows.append(row)
+
+    # Write back to CSV if updated
+    if updated:
+        with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerows(rows)
+
+    return jsonify({'updated': updated})
+
+
 @app.route('/translate', methods=['POST'])
 def translate():
     """Main translation endpoint."""
