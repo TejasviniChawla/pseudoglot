@@ -57,7 +57,7 @@ def merge_today_into_past():
 def updateDaily(level, target_language):
     merge_today_into_past
 
-    client = genai.Client(api_key="AIzaSyB01wlrhFy3ncXoDDr4Nu3UIGbgqV4yJAA")
+    client = genai.Client(api_key=[enter dev key here])
 
     today_path = os.path.join(os.path.dirname(__file__), "today.csv")
     past_path = os.path.join(os.path.dirname(__file__), "pastData.csv")
