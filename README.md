@@ -291,3 +291,6 @@ The extension is ready for use and can be easily extended with real translation 
 ## 📄 License
 
 This project is for educational purposes. Please respect the terms of use for any translation APIs you integrate.
+
+
+https://www.canva.com/design/DAGrFQs9z8g/MKJh8hq_HjzZ9awIDZfHOw/edit?utm_content=DAGrFQs9z8g&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
