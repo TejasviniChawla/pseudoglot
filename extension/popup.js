@@ -1,127 +1,198 @@
-// Popup script for SpurHacked Language Learning extension
+// Popup script – merged stats + settings for SpurHacked
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Get DOM elements
-    const targetLanguageSelect = document.getElementById('targetLanguage');
-    const learningLevelSelect = document.getElementById('learningLevel');
-    const translationToggle = document.getElementById('translationToggle');
-    const saveSettingsBtn = document.getElementById('saveSettings');
-    const testConnectionBtn = document.getElementById('testConnection');
-    const statusDiv = document.getElementById('status');
-    const statsDiv = document.getElementById('stats');
+/*
+  Elements expected in popup.html:
+  - #targetLanguage            (select)
+  - #learningLevel             (select)
+  - #translationToggle         (button/div to toggle)
+  - #saveSettings              (button)
+  - #testConnection            (button)
+  - #status                    (div span)
 
-    // Load saved settings
-    loadSettings();
+  Stats area (old + new):
+  - #stats                     (shows total words translated – chrome‑storage)
+  - #wordsLearnedToday         (span)
+  - #learningProgress          (span)
+  - #totalHovers               (span)
+  - #mostCommonWord            (span)
+  - #dailyRecap                (div, initially hidden)
+  - #recapMessage              (span inside dailyRecap)
+*/
 
-    // Event listeners
-    saveSettingsBtn.addEventListener('click', saveSettings);
-    testConnectionBtn.addEventListener('click', testConnection);
-    translationToggle.addEventListener('click', toggleTranslation);
+document.addEventListener('DOMContentLoaded', () => {
+  /* ───────────────────────────────
+     Cache DOM references
+  ─────────────────────────────── */
+  const targetLanguageSelect = document.getElementById('targetLanguage');
+  const learningLevelSelect  = document.getElementById('learningLevel');
+  const translationToggle    = document.getElementById('translationToggle');
+  const saveSettingsBtn      = document.getElementById('saveSettings');
+  const testConnectionBtn    = document.getElementById('testConnection');
+  const statusDiv            = document.getElementById('status');
 
-    // Load settings from storage
-    function loadSettings() {
-        chrome.storage.sync.get({
-            targetLanguage: 'fr',
-            learningLevel: 'beginner',
-            translationEnabled: false,
-            wordsTranslated: 0
-        }, function(items) {
-            targetLanguageSelect.value = items.targetLanguage;
-            learningLevelSelect.value = items.learningLevel;
-            translationToggle.classList.toggle('active', items.translationEnabled);
-            statsDiv.textContent = `Words translated: ${items.wordsTranslated}`;
-        });
-    }
+  // legacy simple stat
+  const statsDiv             = document.getElementById('stats'); // total words translated
 
-    // Save settings to storage
-    function saveSettings() {
-        const settings = {
-            targetLanguage: targetLanguageSelect.value,
-            learningLevel: learningLevelSelect.value,
-            translationEnabled: translationToggle.classList.contains('active')
-        };
+  // new detailed stats
+  const wordsLearnedTodayDiv = document.getElementById('wordsLearnedToday');
+  const learningProgressDiv  = document.getElementById('learningProgress');
+  const totalHoversDiv       = document.getElementById('totalHovers');
+  const mostCommonWordDiv    = document.getElementById('mostCommonWord');
+  const dailyRecapDiv        = document.getElementById('dailyRecap');
+  const recapMessageDiv      = document.getElementById('recapMessage');
 
-        chrome.storage.sync.set(settings, function() {
-            showStatus('Settings saved successfully!', 'success');
-            
-            // Notify content script about settings change
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if (tabs[0]) {
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                        action: 'settingsUpdated',
-                        settings: settings
-                    });
-                }
-            });
-        });
-    }
+  /* ───────────────────────────────
+     Init
+  ─────────────────────────────── */
+  loadSettings();   // pull settings + wordsTranslated from chrome.storage
+  loadStatistics(); // pull live stats from backend
 
-    // Test connection to backend
-    function testConnection() {
-        testConnectionBtn.disabled = true;
-        testConnectionBtn.textContent = 'Testing...';
-        
-        fetch('http://localhost:5001/health')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'healthy') {
-                    showStatus('✅ Backend connection successful!', 'success');
-                } else {
-                    showStatus('❌ Backend responded but status is not healthy', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Connection test failed:', error);
-                showStatus('❌ Cannot connect to backend. Make sure the server is running on localhost:5001', 'error');
-            })
-            .finally(() => {
-                testConnectionBtn.disabled = false;
-                testConnectionBtn.textContent = 'Test Connection';
-            });
-    }
+  /* ───────────────────────────────
+     Listeners
+  ─────────────────────────────── */
+  saveSettingsBtn .addEventListener('click', saveSettings);
+  testConnectionBtn.addEventListener('click', testConnection);
+  translationToggle.addEventListener('click', toggleTranslation);
 
-    // Toggle translation on/off
-    function toggleTranslation() {
-        translationToggle.classList.toggle('active');
-        
-        // Update storage immediately
-        chrome.storage.sync.set({
-            translationEnabled: translationToggle.classList.contains('active')
-        });
+  /* ───────────────────────────────
+     Functions
+  ─────────────────────────────── */
 
-        // Notify content script
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, {
-                    action: 'translationToggled',
-                    enabled: translationToggle.classList.contains('active')
-                });
-            }
-        });
-
-        const isEnabled = translationToggle.classList.contains('active');
-        showStatus(
-            isEnabled ? '🟢 Translation enabled' : '🔴 Translation disabled', 
-            'info'
-        );
-    }
-
-    // Show status message
-    function showStatus(message, type) {
-        statusDiv.textContent = message;
-        statusDiv.className = `status ${type}`;
-        statusDiv.style.display = 'block';
-        
-        // Hide status after 3 seconds
-        setTimeout(() => {
-            statusDiv.style.display = 'none';
-        }, 3000);
-    }
-
-    // Listen for messages from content script
-    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        if (request.action === 'updateStats') {
-            statsDiv.textContent = `Words translated: ${request.count}`;
-        }
+  // ► Load settings & local word‑count
+  function loadSettings() {
+    chrome.storage.sync.get({
+      targetLanguage   : 'fr',
+      learningLevel    : 'beginner',
+      translationEnabled: false,
+      wordsTranslated   : 0
+    }, items => {
+      targetLanguageSelect.value = items.targetLanguage;
+      learningLevelSelect .value = items.learningLevel;
+      translationToggle.classList.toggle('active', items.translationEnabled);
+      if (statsDiv) statsDiv.textContent = `Words translated: ${items.wordsTranslated}`;
     });
-}); 
+  }
+
+  // ► Save settings
+  function saveSettings() {
+    const settings = {
+      targetLanguage   : targetLanguageSelect.value,
+      learningLevel    : learningLevelSelect.value,
+      translationEnabled: translationToggle.classList.contains('active')
+    };
+
+    chrome.storage.sync.set(settings, () => {
+      showStatus('Settings saved successfully!', 'success');
+
+      // broadcast to content script
+      chrome.tabs.query({active:true, currentWindow:true}, tabs => {
+        if (tabs[0]) {
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action  : 'settingsUpdated',
+            settings: settings
+          });
+        }
+      });
+    });
+  }
+
+  // ► Backend health check
+  function testConnection() {
+    testConnectionBtn.disabled = true;
+    testConnectionBtn.textContent = 'Testing…';
+
+    fetch('http://localhost:5001/health')
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'healthy') {
+          showStatus('✅ Backend connection successful!', 'success');
+          loadStatistics(); // refresh live stats
+        } else {
+          showStatus('⚠️ Backend responded but not healthy', 'error');
+        }
+      })
+      .catch(err => {
+        console.error('Connection test failed:', err);
+        showStatus('❌ Cannot connect to backend on localhost:5001', 'error');
+      })
+      .finally(() => {
+        testConnectionBtn.disabled = false;
+        testConnectionBtn.textContent = 'Test Connection';
+      });
+  }
+
+  // ► Toggle translation
+  function toggleTranslation() {
+    translationToggle.classList.toggle('active');
+
+    const enabled = translationToggle.classList.contains('active');
+    chrome.storage.sync.set({ translationEnabled: enabled });
+
+    chrome.tabs.query({active:true, currentWindow:true}, tabs => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action : 'translationToggled',
+          enabled: enabled
+        });
+      }
+    });
+
+    showStatus(enabled ? '🟢 Translation enabled' : '🔴 Translation disabled', 'info');
+  }
+
+  // ► Load live learning statistics from API
+  function loadStatistics() {
+    fetch('http://localhost:5001/api/stats')
+      .then(r => r.json())
+      .then(data => {
+        wordsLearnedTodayDiv.textContent = data.words_learned_today ?? '0';
+        learningProgressDiv .textContent = `${data.learning_progress ?? 0}%`;
+        totalHoversDiv      .textContent = data.total_hovers ?? '0';
+        mostCommonWordDiv   .textContent = data.most_common_word || '-';
+
+        if (data.words_learned_today > 0) {
+          showMotivationalMessage(data);
+        }
+      })
+      .catch(err => {
+        console.error('Error loading statistics:', err);
+        // set safe defaults
+        wordsLearnedTodayDiv.textContent = '0';
+        learningProgressDiv .textContent = '0%';
+        totalHoversDiv      .textContent = '0';
+        mostCommonWordDiv   .textContent = '-';
+      });
+  }
+
+  // ► Flash motivational recap
+  function showMotivationalMessage(data) {
+    const msgs = [
+      `🎉 Great job! You learned ${data.words_learned_today} words today!`,
+      `🌟 Fantastic progress! ${data.learning_progress}% of words studied!`,
+      `🚀 ${data.total_hovers} total interactions – keep going!`,
+      `💪 Keep it up! Your dedication shows!`,
+      `✨ Amazing! ${data.words_learned_today} new words mastered!`
+    ];
+    recapMessageDiv.textContent = msgs[Math.floor(Math.random()*msgs.length)];
+
+    dailyRecapDiv.style.display = 'block';
+    setTimeout(() => dailyRecapDiv.style.display = 'none', 5000);
+  }
+
+  // ► Status banner helper
+  function showStatus(msg, type='info') {
+    statusDiv.textContent = msg;
+    statusDiv.className   = `status ${type}`;
+    statusDiv.style.display = 'block';
+    setTimeout(() => statusDiv.style.display = 'none', 3000);
+  }
+
+  // ► Listen for runtime messages (update stats count)
+  chrome.runtime.onMessage.addListener((request, _sender, _sendResponse) => {
+    if (request.action === 'updateStats') {
+      // update local word‑count & reload detailed stats
+      if (statsDiv) statsDiv.textContent = `Words translated: ${request.count}`;
+      loadStatistics();
+    }
+  });
+});

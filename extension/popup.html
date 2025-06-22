@@ -1,198 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpurHacked Language Learning</title>
-    <style>
-        body {
-            width: 320px;
-            min-height: 400px;
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpurHacked Language Learning</title>
+  <style>
+    /* ─── Base Layout ─────────────────────────────────────────── */
+    body {
+      width: 320px;
+      min-height: 400px;
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+    }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .header p {
+      margin: 5px 0 0;
+      font-size: 12px;
+      opacity: 0.8;
+    }
 
-        .header h1 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: 600;
-        }
+    /* ─── Inputs & Buttons ────────────────────────────────────── */
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 500; }
 
-        .header p {
-            margin: 5px 0 0 0;
-            font-size: 12px;
-            opacity: 0.8;
-        }
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    select:focus,
+    button:focus { outline: none; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5); }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+    button { background: #4caf50; color: #fff; font-weight: 600; margin-top: 10px; }
+    button:hover { background: #45a049; transform: translateY(-1px); }
+    button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-            font-weight: 500;
-        }
+    /* ─── Status banner ───────────────────────────────────────── */
+    .status {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      text-align: center;
+    }
+    .status.success { background: rgba(76, 175, 80, 0.2); border: 1px solid rgba(76, 175, 80, 0.3); }
+    .status.error   { background: rgba(244, 67, 54, 0.2); border: 1px solid rgba(244, 67, 54, 0.3); }
+    .status.info    { background: rgba(33, 150, 243, 0.2); border: 1px solid rgba(33, 150, 243, 0.3); }
 
-        select, button {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+    /* ─── Toggle section ─────────────────────────────────────── */
+    .toggle-section {
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+    .toggle-label { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 
-        select:focus, button:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-        }
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .toggle-switch.active { background: #4caf50; }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s ease;
+    }
+    .toggle-switch.active::after { transform: translateX(26px); }
 
-        button {
-            background: #4CAF50;
-            color: white;
-            font-weight: 600;
-            margin-top: 10px;
-        }
+    /* legacy simple stats */
+    .stats { margin-top: 15px; font-size: 12px; opacity: 0.8; }
 
-        button:hover {
-            background: #45a049;
-            transform: translateY(-1px);
-        }
+    /* ─── Detailed stats section ─────────────────────────────── */
+    .stats-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .stats-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .stats-title  { font-size: 14px; font-weight: 600; color: #fff; }
+    .stats-icon   { font-size: 16px; }
 
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
+    .stat-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    .stat-item:last-child { border-bottom: none; margin-bottom: 0; }
+    .stat-label { font-size: 12px; color: rgba(255, 255, 255, 0.8); }
+    .stat-value { font-size: 12px; font-weight: 600; color: #fff; }
 
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        .status.success {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid rgba(76, 175, 80, 0.3);
-        }
-
-        .status.error {
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid rgba(244, 67, 54, 0.3);
-        }
-
-        .status.info {
-            background: rgba(33, 150, 243, 0.2);
-            border: 1px solid rgba(33, 150, 243, 0.3);
-        }
-
-        .toggle-section {
-            margin-top: 15px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-        }
-
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 50px;
-            height: 24px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-        }
-
-        .toggle-switch.active {
-            background: #4CAF50;
-        }
-
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            transition: transform 0.3s ease;
-        }
-
-        .toggle-switch.active::after {
-            transform: translateX(26px);
-        }
-
-        .stats {
-            margin-top: 15px;
-            font-size: 12px;
-            opacity: 0.8;
-        }
-    </style>
+    .daily-recap {
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(76, 175, 80, 0.2);
+      border: 1px solid rgba(76, 175, 80, 0.3);
+      border-radius: 6px;
+      font-size: 11px;
+      text-align: center;
+      color: #a5d6a7;
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🌍 Pseudoglot</h1>
-        <p>Learn languages while browsing</p>
+  <div class="header">
+    <h1>🌍 Pseudoglot</h1>
+    <p>Learn the language. Live the language.</p>
+  </div>
+
+  <!-- Target language -->
+  <div class="form-group">
+    <label for="targetLanguage">Target Language:</label>
+    <select id="targetLanguage">
+      <option value="fr">French</option>
+      <option value="es">Spanish</option>
+      <option value="de">German</option>
+      <option value="it">Italian</option>
+      <option value="pt">Portuguese</option>
+    </select>
+  </div>
+
+  <!-- Learning level -->
+  <div class="form-group">
+    <label for="learningLevel">Learning Level:</label>
+    <select id="learningLevel">
+      <option value="beginner">Beginner</option>
+      <option value="intermediate">Intermediate</option>
+      <option value="advanced">Advanced</option>
+    </select>
+  </div>
+
+  <!-- Toggle translation + simple word-count -->
+  <div class="toggle-section">
+    <div class="toggle-label">
+      <span>Enable Translation</span>
+      <div class="toggle-switch" id="translationToggle"></div>
+    </div>
+    <div class="stats" id="stats">Words translated: 0</div>
+  </div>
+
+  <!-- Detailed learning statistics -->
+  <div class="stats-section">
+    <div class="stats-header">
+      <span class="stats-title">Learning Statistics</span>
+      <span class="stats-icon">🎯</span>
     </div>
 
-    <div class="form-group">
-        <label for="targetLanguage">Target Language:</label>
-        <select id="targetLanguage">
-            <option value="fr">French</option>
-            <option value="es">Spanish</option>
-            <option value="de">German</option>
-            <option value="it">Italian</option>
-            <option value="pt">Portuguese</option>
-        </select>
+    <div class="stat-item"><span class="stat-label">Words Learned Today</span><span class="stat-value" id="wordsLearnedToday">0</span></div>
+    <div class="stat-item"><span class="stat-label">Learning Progress</span><span class="stat-value" id="learningProgress">0%</span></div>
+    <div class="stat-item"><span class="stat-label">Total Hovers</span><span class="stat-value" id="totalHovers">0</span></div>
+    <div class="stat-item"><span class="stat-label">Most Studied Word</span><span class="stat-value" id="mostCommonWord">-</span></div>
+
+    <div class="daily-recap" id="dailyRecap" style="display:none;">
+      <div id="recapMessage"></div>
     </div>
+  </div>
 
-    <div class="form-group">
-        <label for="learningLevel">Learning Level:</label>
-        <select id="learningLevel">
-            <option value="beginner">Beginner</option>
-            <option value="intermediate">Intermediate</option>
-            <option value="advanced">Advanced</option>
-        </select>
-    </div>
+  <button id="saveSettings">Save Settings</button>
+  <button id="testConnection">Test Connection</button>
 
-    <div class="toggle-section">
-        <div class="toggle-label">
-            <span>Enable Translation</span>
-            <div class="toggle-switch" id="translationToggle"></div>
-        </div>
-        <div class="stats" id="stats">
-            Words translated: 0
-        </div>
-    </div>
+  <div id="status" class="status" style="display:none;"></div>
 
-    <button id="saveSettings">Save Settings</button>
-    <button id="testConnection">Test Connection</button>
-
-    <div id="status" class="status" style="display: none;"></div>
-
-    <script src="popup.js"></script>
+  <script src="popup.js"></script>
 </body>
-</html> 
+</html>
