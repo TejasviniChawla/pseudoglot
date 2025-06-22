@@ -8,10 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveSettingsBtn = document.getElementById('saveSettings');
     const testConnectionBtn = document.getElementById('testConnection');
     const statusDiv = document.getElementById('status');
-    const statsDiv = document.getElementById('stats');
+    
+    // Statistics elements
+    const wordsLearnedTodayDiv = document.getElementById('wordsLearnedToday');
+    const learningProgressDiv = document.getElementById('learningProgress');
+    const totalHoversDiv = document.getElementById('totalHovers');
+    const mostCommonWordDiv = document.getElementById('mostCommonWord');
+    const dailyRecapDiv = document.getElementById('dailyRecap');
+    const recapMessageDiv = document.getElementById('recapMessage');
 
     // Load saved settings
     loadSettings();
+    loadStatistics();
 
     // Event listeners
     saveSettingsBtn.addEventListener('click', saveSettings);
@@ -23,14 +31,59 @@ document.addEventListener('DOMContentLoaded', function() {
         chrome.storage.sync.get({
             targetLanguage: 'fr',
             learningLevel: 'beginner',
-            translationEnabled: false,
-            wordsTranslated: 0
+            translationEnabled: false
         }, function(items) {
             targetLanguageSelect.value = items.targetLanguage;
             learningLevelSelect.value = items.learningLevel;
             translationToggle.classList.toggle('active', items.translationEnabled);
-            statsDiv.textContent = `Words translated: ${items.wordsTranslated}`;
         });
+    }
+
+    // Load and display statistics from CSV data
+    function loadStatistics() {
+        fetch('http://localhost:5001/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update statistics display
+                wordsLearnedTodayDiv.textContent = data.words_learned_today;
+                learningProgressDiv.textContent = `${data.learning_progress}%`;
+                totalHoversDiv.textContent = data.total_hovers;
+                mostCommonWordDiv.textContent = data.most_common_word || '-';
+                
+                // Show motivational message if progress is good
+                if (data.words_learned_today > 0) {
+                    showMotivationalMessage(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading statistics:', error);
+                // Set default values if API is not available
+                wordsLearnedTodayDiv.textContent = '0';
+                learningProgressDiv.textContent = '0%';
+                totalHoversDiv.textContent = '0';
+                mostCommonWordDiv.textContent = '-';
+            });
+    }
+
+    // Show motivational message based on progress
+    function showMotivationalMessage(data) {
+        const messages = [
+            `🎉 Great job! You've learned ${data.words_learned_today} words today!`,
+            `🌟 Fantastic progress! ${data.learning_progress}% of words studied!`,
+            `🚀 You're on fire! ${data.total_hovers} total interactions today!`,
+            `💪 Keep it up! You're making excellent progress!`,
+            `✨ Amazing dedication! ${data.words_learned_today} new words learned!`
+        ];
+        
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        recapMessageDiv.textContent = randomMessage;
+        
+        dailyRecapDiv.style.display = 'block';
+        
+        // Hide recap after 5 seconds
+        setTimeout(() => {
+            dailyRecapDiv.style.display = 'none';
+        }, 5000);
     }
 
     // Save settings to storage
@@ -66,6 +119,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status === 'healthy') {
                     showStatus('✅ Backend connection successful!', 'success');
+                    // Reload statistics after successful connection
+                    loadStatistics();
                 } else {
                     showStatus('❌ Backend responded but status is not healthy', 'error');
                 }
@@ -121,7 +176,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Listen for messages from content script
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         if (request.action === 'updateStats') {
-            statsDiv.textContent = `Words translated: ${request.count}`;
+            // Reload statistics when new words are learned
+            loadStatistics();
         }
     });
 }); 

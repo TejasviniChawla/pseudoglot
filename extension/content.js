@@ -75,11 +75,24 @@ class SpurHackedTranslator {
         this.tooltipElement = document.createElement('div');
         this.tooltipElement.id = 'spurhacked-tooltip';
         this.tooltipElement.style.cssText = `
-            position: absolute; z-index: 10000; background:#333; color:#fff;
-            padding:8px 12px; border-radius:6px; font:14px/1.4 Arial,sans-serif;
-            box-shadow:0 4px 12px rgba(0,0,0,.3); pointer-events:none; opacity:0;
-            transition:opacity .2s ease; max-width:300px; word-wrap:break-word;
-            display:none; border:1px solid #555;`;
+            position: absolute; 
+            z-index: 10000; 
+            background: #1a1a1a; 
+            color: #ffffff;
+            padding: 12px 16px; 
+            border-radius: 8px; 
+            font: 14px/1.5 'Segoe UI', Arial, sans-serif;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4); 
+            pointer-events: none; 
+            opacity: 0;
+            transition: opacity 0.2s ease; 
+            max-width: 320px; 
+            word-wrap: break-word;
+            display: none; 
+            border: 1px solid #404040;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        `;
         document.body.appendChild(this.tooltipElement);
     }
 
@@ -231,11 +244,16 @@ class SpurHackedTranslator {
             const eng = translation.original.toLowerCase();
             if (!this.hoveredWords.has(eng)) {
                 this.hoveredWords.add(eng);
+                
+                // Send hover frequency to backend
                 fetch('http://localhost:5001/api/hover', {
                     method:'POST',
                     headers:{'Content-Type':'application/json'},
                     body:JSON.stringify({english:eng})
                 }).catch(err=>console.warn('SpurHacked: hover freq error', err));
+                
+                // Update statistics - this is a new word learned
+                this.updateLearningStats(1);
             }
         });
         span.addEventListener('mouseleave', () => this.hideTooltip());
@@ -262,9 +280,9 @@ class SpurHackedTranslator {
     showTooltip(evt, tr) {
         const tt = this.tooltipElement;
         tt.innerHTML = `
-            <div style="font-weight:bold;margin-bottom:4px;color:#fff;">${tr.original} → ${tr.translated}</div>
-            <div style="margin-bottom:2px;color:#fff;"><strong>Meaning:</strong> ${tr.meaning}</div>
-            <div style="color:#fff;"><strong>Pronunciation:</strong> ${tr.pronunciation}</div>`;
+            <div style="font-weight: 600; margin-bottom: 8px; color: #ffffff; font-size: 15px; border-bottom: 1px solid #404040; padding-bottom: 6px;">${tr.original} → ${tr.translated}</div>
+            <div style="margin-bottom: 6px; color: #e0e0e0;"><strong style="color: #ffffff;">Meaning:</strong> ${tr.meaning}</div>
+            <div style="color: #e0e0e0;"><strong style="color: #ffffff;">Pronunciation:</strong> ${tr.pronunciation}</div>`;
 
         const rect  = evt.target.getBoundingClientRect();
         const top   = rect.bottom + (window.pageYOffset||document.documentElement.scrollTop) + 5;
@@ -384,6 +402,18 @@ class SpurHackedTranslator {
         const count = this.translations.size;
         chrome.storage.sync.set({ wordsTranslated: count });
         chrome.runtime.sendMessage({ action:'updateStats', count });
+    }
+
+    /* ------------------------------------------------------------------
+       📊  LEARNING STATISTICS
+    ------------------------------------------------------------------ */
+    updateLearningStats(newWordsCount) {
+        // Send update to popup to refresh CSV-based statistics
+        chrome.runtime.sendMessage({ 
+            action: 'updateStats'
+        });
+        
+        console.log(`SpurHacked: ${newWordsCount} new word(s) learned!`);
     }
 
     /* ------------------------------------------------------------------

@@ -102,6 +102,65 @@ def hover_word():
 
     return jsonify({'updated': updated})
 
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
+    """Get learning statistics from CSV data."""
+    try:
+        csv_path = os.path.join(os.path.dirname(__file__), 'today.csv')
+        
+        if not os.path.exists(csv_path):
+            return jsonify({
+                'total_words': 0,
+                'words_learned_today': 0,
+                'total_hovers': 0,
+                'most_common_word': None,
+                'learning_progress': 0
+            })
+        
+        total_words = 0
+        total_hovers = 0
+        words_learned_today = 0
+        most_common_word = None
+        max_frequency = 0
+        
+        with open(csv_path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader, None)  # Skip the header/date line
+            
+            for row in reader:
+                if len(row) < 6 or not row[0].strip() or row[0].startswith('//'):
+                    continue
+                
+                total_words += 1
+                
+                try:
+                    frequency = int(row[4].strip())
+                    total_hovers += frequency
+                    
+                    if frequency > 0:
+                        words_learned_today += 1
+                    
+                    if frequency > max_frequency:
+                        max_frequency = frequency
+                        most_common_word = row[0].strip()
+                        
+                except (ValueError, IndexError):
+                    continue
+        
+        # Calculate learning progress (percentage of words that have been hovered)
+        learning_progress = round((words_learned_today / total_words * 100) if total_words > 0 else 0, 1)
+        
+        return jsonify({
+            'total_words': total_words,
+            'words_learned_today': words_learned_today,
+            'total_hovers': total_hovers,
+            'most_common_word': most_common_word,
+            'learning_progress': learning_progress,
+            'max_frequency': max_frequency
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/translate', methods=['POST'])
 def translate():

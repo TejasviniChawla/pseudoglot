@@ -150,6 +150,84 @@
             font-size: 12px;
             opacity: 0.8;
         }
+
+        .stats-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .stats-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .stats-icon {
+            font-size: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .stat-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .daily-recap {
+            margin-top: 12px;
+            padding: 10px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 6px;
+            font-size: 11px;
+            text-align: center;
+            color: #a5d6a7;
+        }
+
+        .streak-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .streak-count {
+            background: #ff9800;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -181,8 +259,36 @@
             <span>Enable Translation</span>
             <div class="toggle-switch" id="translationToggle"></div>
         </div>
-        <div class="stats" id="stats">
-            Words translated: 0
+    </div>
+
+    <div class="stats-section">
+        <div class="stats-header">
+            <span class="stats-title">Learning Statistics</span>
+            <span class="stats-icon">🎯</span>
+        </div>
+        
+        <div class="stat-item">
+            <span class="stat-label">Words Learned Today</span>
+            <span class="stat-value" id="wordsLearnedToday">0</span>
+        </div>
+        
+        <div class="stat-item">
+            <span class="stat-label">Learning Progress</span>
+            <span class="stat-value" id="learningProgress">0%</span>
+        </div>
+        
+        <div class="stat-item">
+            <span class="stat-label">Total Hovers</span>
+            <span class="stat-value" id="totalHovers">0</span>
+        </div>
+        
+        <div class="stat-item">
+            <span class="stat-label">Most Studied Word</span>
+            <span class="stat-value" id="mostCommonWord">-</span>
+        </div>
+
+        <div class="daily-recap" id="dailyRecap" style="display: none;">
+            <div id="recapMessage"></div>
         </div>
     </div>
 
