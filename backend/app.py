@@ -4,6 +4,8 @@ import re
 import random
 import os
 import csv
+from datetime import date
+from updateDaily import *
 
 app = Flask(__name__)
 CORS(app)
@@ -43,28 +45,24 @@ def extract_words(text):
 def get_translations(words, level, target_language):
     """Get translations for words based on level and target language."""
     translations = []
+    words_set = set(word.lower() for word in words)  # For efficient lookup
     
     csv_path = os.path.join(os.path.dirname(__file__), 'today.csv')
     with open(csv_path, newline='', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
         next(reader, None)  # Skip the header/date line
         for row in reader:
-            if len(row) < 6 or not row[0].strip() or row[0].startswith('//'):
-                continue  # skip empty or comment lines
             english = row[0].strip()
             translated = row[1].strip()
             meaning = row[2].strip()
             pronunciation = row[3].strip()
             # frequency = int(row[4].strip())
-            word_type = row[5].strip()
             translations.append({
                 'original': english,
                 'translated': translated,
                 'meaning': meaning,
                 'pronunciation': pronunciation,
-                'word_type': word_type
             })
-    
     return translations
 
 @app.route('/api/hover', methods=['POST'])
@@ -106,33 +104,30 @@ def hover_word():
 @app.route('/translate', methods=['POST'])
 def translate():
     """Main translation endpoint."""
-    try:
-        data = request.get_json()
+    data = request.get_json()
+    text = data.get('text', '')
+    level = data.get('level', 'beginner')
+    target_language = data.get('targetLanguage', 'fr')
+
+
+    csv_path = os.path.join(os.path.dirname(__file__), 'today.csv')
+
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        first_row = next(reader, None)
+
+    if (first_row[0] != str(date.today())) or (first_row[1] != target_language) or (first_row[2] != level):
+        updateDaily(level, target_language)
+
+
+    # Extract meaningful words from the text
+    words = extract_words(text)
+    
+    # Get translations
+    translations = get_translations(words, level, target_language)
+    
+    return jsonify({"translations": translations})
         
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-        
-        text = data.get('text', '')
-        level = data.get('level', 'beginner')
-        target_language = data.get('targetLanguage', 'fr')
-        
-        if not text:
-            return jsonify({"error": "No text provided"}), 400
-        
-        # Extract meaningful words from the text
-        words = extract_words(text)
-        
-        # Get translations
-        translations = get_translations(words, level, target_language)
-        
-        return jsonify({
-            "translations": translations,
-            "total_words_found": len(words),
-            "translations_provided": len(translations)
-        })
-        
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
