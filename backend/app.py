@@ -23,20 +23,7 @@ def extract_words(text):
     words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
     
     # Filter out common words that don't need translation
-    common_words = {
-        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
-        'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
-        'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those',
-        'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your',
-        'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'ours', 'theirs', 'what', 'when', 'where',
-        'why', 'how', 'who', 'which', 'whom', 'whose', 'if', 'then', 'else', 'than', 'as', 'so',
-        'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
-        'not', 'only', 'own', 'same', 'too', 'very', 'just', 'now', 'here', 'there', 'up', 'down',
-        'out', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'also', 'very', 'well',
-        'even', 'still', 'back', 'way', 'far', 'long', 'much', 'many', 'every', 'each', 'both',
-        'either', 'neither', 'one', 'two', 'three', 'first', 'second', 'third', 'last', 'next',
-        'new', 'old', 'good', 'bad', 'big', 'small', 'high', 'low', 'right', 'left', 'yes', 'no'
-    }
+    common_words = {}
     
     # Filter out common words and duplicates
     meaningful_words = [word for word in words if word not in common_words]

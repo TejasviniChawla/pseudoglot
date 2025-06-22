@@ -80,7 +80,7 @@ def updateDaily(level, target_language):
     if reset_past:
         with open(past_path, "w", encoding="utf-8") as f:
             f.write("english,translated,meaning,pronunciation,frequency,dayssince\n")
-            
+
     with open(past_path, newline='', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile)
         header = next(reader)
@@ -96,7 +96,54 @@ def updateDaily(level, target_language):
         num = 100
     response = client.models.generate_content(
         model="gemini-2.5-flash-lite-preview-06-17",
-        contents=f"You are to modify a csv file to help someone learn new words in {target_language} language. You are required to strictly produce {num} common nouns, all of {level} difficulty. Also, this is a list of words that this learner has encountered in the past(english/freq/dayssince). If days is low and freq is low, prioritise the word. If not, choose words that they shold encounter more, not necessarily from the list. If freq is high, avoid the word entirely. The output should strictly be in the form of a csv file, no comments, no filler, no explanations, just the csv output with headers English, Translation, Meaning (within 8 words), Pronunciation(like Pro-Nun-See-A-Shun), Frequency (which is always initialized as 0). I am using the gemini API so I need to ensure your output is JUST the file. Do not include the header line in your output.{csv_str}"
+        contents=f"""You are generating a **CSV snippet—no header, no commentary**—to update a learner’s word list for {target_language}.  
+The learner needs **exactly {num} common nouns** at **{level}** difficulty.
+
+─────────────────
+CONTEXT  (do NOT output)
+The first value in each row MUST be the English word.
+The second is the Translation in {target_language}.
+Do NOT reverse this order. It must be:
+
+English,Translation,Meaning,Pronunciation,Frequency
+
+{csv_str}
+─────────────────
+
+SELECTION RULES  
+1.  If *DaysSince* is low **AND** *Freq* is low ➜ include the word (high priority).  
+2.  If *Freq* is high ➜ exclude the word.  
+3.  Otherwise choose a suitable new noun not in the list.  
+4.  Avoid duplicates.  Return exactly {num} rows.
+
+OUTPUT FORMAT (strict)  
+• Comma-separated, **no header row**.  
+• Column order **exactly**:  
+  `English,Translation,Meaning(max 8 words),Pronunciation(Pro-Nun-See-A-Shun style),Frequency`  
+• Set **Frequency** to `0` for every row.  
+• One row per line, no extra spaces.
+
+Any deviation from the order or format will break downstream code.  
+Return only the CSV rows—nothing else.
+
+Here is an example of the correct row format:
+
+book,livre,collection of written pages,BUHK,0
+
+This row means:
+- English word: book
+- Translation: livre (in French)
+- Meaning: collection of written pages
+- Pronunciation: BUHK
+- Frequency: 0
+
+Use this format for all rows.
+⚠️ The first column must be the ENGLISH word.
+⚠️ The second column must be its TRANSLATION in {target_language}.
+
+Before you finalise your answer, make sure that you are putting English first, translation next. English first, translation next.
+"""
+
     )
     print(response.text)
 
