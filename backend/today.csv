@@ -1,105 +1,16 @@
-2025-06-22,de,advanced,,
-Gefühl,feeling,emotion,GHEW-YOOL,0
-Erwartung,expectation,anticipation,AIR-VAHR-TOONG,0
-Gedanke,thought,idea,GHE-DAHNK-uh,0
-Erinnerung,memory,recollection of the past,AIR-IN-uh-ROONG,0
-Bedürfnis,need,requirement,beh-DUUR-F-nis,0
-Möglichkeit,possibility,chance,MÖG-lih-KITE,0
-Ursache,cause,reason for something,UUR-zah-kuh,0
-Wirkung,effect,result,VUUR-koong,0
-Verständnis,understanding,comprehension,fuhr-SHTAY-uh-nis,0
-Verbesserung,improvement,making something better,fuhr-BES-uh-ROONG,0
-Veränderung,change,alteration,fuhr-EN-duh-ROONG,0
-Entwicklung,development,growth,ENT-vik-loong,0
-Erfolg,success,achieving a goal,ehr-FOLK,0
-Misserfolg,failure,lack of success,MIS-ehr-folK,0
-Herausforderung,challenge,difficult task,HAH-ROWSS-fohr-duh-ROONG,0
-Lösung,solution,answer to a problem,LÖW-zoong,0
-Fortschritt,progress,moving forward,FOHRT-shriht,0
-Zweifel,doubt,uncertainty,TSVY-fuhl,0
-Überzeugung,conviction,strong belief,Ü-buh-RTSOY-goong,0
-Hoffnung,hope,desire for something,HOHF-noong,0
-Enttäuschung,disappointment,sadness from unmet expectations,ENT-TOY-shung,0
-Freude,joy,great happiness,FROY-duh,0
-Traurigkeit,sadness,unhappiness,TRROW-rih-kite,0
-Wut,anger,strong displeasure,VOOT,0
-Angst,fear,feeling of apprehension,AHNGST,0
-Überraschung,surprise,unexpected event,Ü-buh-RAH-shung,0
-Schuld,guilt,responsibility for a wrongdoing,SHOOLT,0
-Ehre,honor,high respect,EH-ruh,0
-Mut,courage,bravery,MOOT,0
-Schwäche,weakness,lack of strength,SHVEH-khuh,0
-Stärke,strength,power,SHTAIR-kuh,0
-Wahrheit,truth,fact,VAHR-hite,0
-Lüge,lie,false statement,LÜ-guh,0
-Recht,right,legal claim,REHCT,0
-Unrecht,injustice,unfairness,UHN-rehct,0
-Verantwortung,responsibility,duty,fuhr-AHN-tvohr-toong,0
-Pflicht,duty,obligation,PFLIHCT,0
-Hilfe,help,assistance,HIL-fuh,0
-Unterstützung,support,aid,UHN-tuhr-SHTÜT-soong,0
-Rat,advice,guidance,RAHT,0
-Vorschlag,suggestion,idea proposed,FOOR-shlahk,0
-Plan,plan,intended course of action,PLAHN,0
-Ziel,goal,objective,TSEEL,0
-Ergebnis,result,outcome,ehr-GAYB-nis,0
-Grund,reason,basis for something,GROONT,0
-Beweis,proof,evidence,buh-VYSS,0
-Erklärung,explanation,statement making clear,ehr-KLEH-roong,0
-Beschreibung,description,account of characteristics,buh-SHRY-boong,0
-Vorstellung,idea,concept,fohr-SHTELL-ung,0
-Bild,picture,image,BILHT,0
-Geschichte,story,account of events,geh-SHEEH-tuh,0
-Nachricht,news,information,NAH-rihct,0
-Mitteilung,message,communication,MIT-ty-loong,0
-Frage,question,inquiry,FRAH-guh,0
-Antwort,answer,response,AHN-vohrt,0
-Diskussion,discussion,conversation,di-skuh-SYOHN,0
-Meinung,opinion,belief,MY-noong,0
-Argument,argument,reasoned case,ahr-goo-MINT,0
-Gegner,opponent,rival,GAYG-nuhr,0
-Vertrauen,trust,belief in reliability,fuhr-TRROW-uhn,0
-Verrat,betrayal,breach of trust,fuhr-RAHT,0
-Freundschaft,friendship,bond between friends,FROYNT-shaft,0
-Liebe,love,deep affection,LEE-buh,0
-Hass,hate,intense dislike,HAHS,0
-Freude,joy,great happiness,FROY-duh,0
-Vergnügen,pleasure,enjoyment,fuhr-GNÜG-uhn,0
-Schmerz,pain,physical or emotional suffering,SHMAIRTS,0
-Gesundheit,health,state of well-being,geh-ZOONT-hite,0
-Krankheit,illness,state of being unwell,KRAHNG-kite,0
-Leben,life,existence,LEH-buhn,0
-Tod,death,end of life,TOHT,0
-Zukunft,future,time yet to come,TSOO-kunft,0
-Vergangenheit,past,time that has gone,fuhr-GAHNG-uhn-hite,0
-Gegenwart,present,current time,GAYG-uhn-vahrt,0
-Zeit,time,duration,TSITE,0
-Moment,moment,brief period,moh-MINT,0
-Augenblick,instant,very short time,OW-guhn-blihk,0
-Uhr,clock,timekeeping device,UUR,0
-Minute,minute,sixty seconds,mih-NOO-tuh,0
-Stunde,hour,sixty minutes,SHTUN-duh,0
-Tag,day,twenty-four hours,TAHK,0
-Woche,week,seven days,VOH-khuh,0
-Monat,month,about thirty days,MOH-naht,0
-Jahr,year,twelve months,YAHR,0
-Jahrzehnt,decade,ten years,YAHR-tsehnt,0
-Jahrhundert,century,hundred years,YAHR-HOON-duhrt,0
-Ort,place,location,OHRT,0
-Platz,space,area,PLAHTS,0
-Raum,room,space,ROWM,0
-Gebiet,area,region,geh-BEET,0
-Grenze,border,limit,GREN-tsuh,0
-Punkt,point,specific location,POONGKT,0
-Linie,line,straight sequence of points,LEE-nee-uh,0
-Form,shape,external appearance,FOHRM,0
-Farbe,color,hue,FAHR-buh,0
-Licht,light,illumination,LIHCT,0
-Dunkelheit,darkness,absence of light,DOONG-kuhl-hite,0
-Geräusch,noise,sound,geh-ROYSH,0
-Stille,silence,absence of sound,SHTIL-luh,0
-Wetter,weather,atmospheric conditions,VEH-tuhr,0
-Klima,climate,average weather conditions,KLEE-mah,0
-Natur,nature,physical world,nah-TOO-r,0
-Welt,world,earth and its inhabitants,VELT,0
-Universum,universe,all existing matter,oo-nee-VEHR-soom,0
+2025-06-22,it,beginner,,
+dog,cane,domestic canine animal,DAWG,0
+cat,gatto,small domesticated carnivorous mammal,KAT,0
+house,casa,building for human habitation,HOWS,1
+car,macchina,motor vehicle,KAR,0
+book,libro,written or printed work,BUHK,1
+table,tavolo,piece of furniture with flat top,TAY-bul,0
+chair,sedia,seat for one person,CHAIR,0
+food,cibo,substance consumed for nutrition,FOOD,0
+water,acqua,transparent liquid essential for life,WAW-ter,1
+child,bambino,young human being,CHILD,0
+friend,amico,person whom one knows well,FREHND,0
+school,scuola,institution for education,SKOOL,0
+city,città,large town,CIT-ee,0
+river,fiume,natural flowing watercourse,RIV-er,0
+mountain,montagna,large natural elevation of earth,MOUNT-in,0
