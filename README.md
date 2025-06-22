@@ -1,99 +1,99 @@
-# SpurHacked - Language Learning Chrome Extension
+# Pseudoglot - Language Learning Chrome Extension
 
-A Chrome extension that helps users learn new languages by translating words on web pages in real-time. The extension works with a Python Flask backend that provides intelligent word translation based on the user's learning level.
+A Chrome extension that helps you learn new languages by translating words on web pages in real-time. The extension works with a Python Flask backend that provides intelligent word translation based on your learning level.
 
 ## 🌟 Features
 
 - **Real-time Translation**: Translates words on any webpage based on user's learning level
-- **Interactive Learning**: Hover tooltips show meaning and pronunciation
-- **Customizable Settings**: Choose target language and learning level
-- **Non-intrusive**: Preserves original page layout and styling
-- **Smart Word Filtering**: Focuses on meaningful vocabulary, filters out common words
-- **Dynamic Content Support**: Handles dynamically loaded content
-- **Learning Statistics**: Track how many words you've learned
+- **Learning Level Support**: Beginner, Intermediate, and Advanced vocabulary
+- **Multiple Languages**: Support for French, Spanish, and German
+- **Interactive Tooltips**: Hover over translated words for meanings and pronunciations
+- **Progress Tracking**: Monitor your learning progress and statistics
+- **Customizable Settings**: Choose your target language and learning level
 
-## 🏗️ How It Works
+## 🏗️ Architecture
 
-### Architecture Overview
+### How It Works
 
-SpurHacked consists of two main components:
-
-1. **Chrome Extension** (Frontend)
-   - Extracts text from web pages
-   - Sends text to backend for translation
-   - Replaces words with translations
-   - Shows interactive tooltips
-
-2. **Python Flask Backend** (API)
-   - Processes text and extracts meaningful words
-   - Provides translations based on learning level
-   - Returns structured translation data
-
-### Technical Flow
-
-```
-1. User enables translation in extension popup
-2. Content script extracts text from webpage
+1. User enables the extension and configures language settings
+2. Extension scans webpage content for translatable words
 3. Text is sent to Flask backend via POST /translate
-4. Backend filters words and returns translations
+4. Backend filters words based on learning level and returns translations
 5. Content script replaces words with translated versions
-6. Hover events show tooltips with details
-```
+6. Users can hover over translated words for detailed information
 
-### Detailed Process
+### Components
 
-#### 1. Text Extraction
-- Content script walks through all text nodes in the document
-- Filters out script, style, and already processed elements
-- Extracts clean text content for processing
+Pseudoglot consists of two main components:
 
-#### 2. Backend Processing
-- Receives text, learning level, and target language
-- Uses regex to extract individual words
-- Filters out common English words (the, a, and, etc.)
-- Matches words against translation database
-- Returns structured translation data
+#### Backend (Python Flask)
+- **Flask API Server**: Handles translation requests and data management
+- **Word Filtering**: Intelligent filtering based on learning levels
+- **CORS Support**: Configured for cross-origin requests from Chrome extension
+- **Mock Data**: Sample translations for demonstration
 
-#### 3. Word Replacement
-- Creates DOM elements for translated words
-- Preserves original capitalization
-- Adds hover event listeners for tooltips
-- Maintains page layout and styling
-
-#### 4. Interactive Tooltips
-- Shows on hover over translated words
-- Displays: original word → translation
-- Includes meaning and pronunciation
-- Positioned dynamically based on word location
+#### Chrome Extension
+- **Content Script**: Scans and modifies webpage content
+- **Popup Interface**: User settings and statistics display
+- **Background Script**: Handles extension lifecycle
+- **Storage API**: Saves user preferences and progress
 
 ## 📁 Project Structure
 
 ```
-spurHacked/
-├── backend/                 # Python Flask backend
-│   ├── app.py              # Main Flask application with translation logic
+pseudoglot/
+├── backend/
+│   ├── app.py              # Flask API server
 │   ├── requirements.txt    # Python dependencies
-│   └── README.md          # Backend documentation
-├── extension/              # Chrome extension
-│   ├── manifest.json      # Extension manifest (Manifest V3)
-│   ├── content.js         # Content script for webpage interaction
+│   ├── README.md          # Backend documentation
+│   └── test_backend.py    # API testing script
+├── extension/
+│   ├── manifest.json      # Extension configuration
 │   ├── popup.html         # Extension popup interface
-│   ├── popup.js           # Popup functionality and settings
-│   ├── background.js      # Background service worker
-│   ├── styles.css         # Extension styles with responsive design
-│   └── icon*.png          # Extension icons (placeholders)
-├── venv/                  # Python virtual environment
+│   ├── popup.js           # Popup functionality
+│   ├── content.js         # Content script for webpage modification
+│   ├── background.js      # Background script
+│   └── styles.css         # Extension styling
+├── frontend/              # React/Next.js frontend application
 ├── setup.sh              # Automated setup script
 ├── manual_setup.sh       # Manual setup instructions
-├── test_backend.py       # Backend testing script
 ├── INSTALLATION.md       # Detailed installation guide
-├── PROJECT_SUMMARY.md    # Complete project documentation
 └── README.md             # This file
 ```
 
-## 🛠️ Technical Implementation
+## 🚀 Quick Start
 
-### Backend API Endpoints
+### Prerequisites
+- Python 3.7+
+- Google Chrome browser
+- Git (optional)
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd pseudoglot
+   ```
+
+2. **Run the setup script**:
+   ```bash
+   ./setup.sh
+   ```
+
+3. **Load the Chrome extension**:
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked" and select the `extension` folder
+
+4. **Start using the extension**:
+   - Click the extension icon in your toolbar
+   - Configure your target language and learning level
+   - Enable translation and start browsing!
+
+## 🔧 API Documentation
+
+### Backend Endpoints
 
 #### POST /translate
 Translates text based on learning level and target language.
@@ -169,7 +169,7 @@ Health check endpoint for connection testing.
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd spurHacked
+   cd pseudoglot
    ```
 
 2. **Run the setup script**:
@@ -284,7 +284,7 @@ python test_backend.py
 
 ## 🎉 Conclusion
 
-SpurHacked is a fully functional language learning Chrome extension with a robust Python backend. It provides an innovative way to learn languages by translating words in real-time while browsing the web. The project demonstrates modern web development practices, Chrome extension development, and API design.
+Pseudoglot is a fully functional language learning Chrome extension with a robust Python backend. It provides an innovative way to learn languages by translating words in real-time while browsing the web. The project demonstrates modern web development practices, Chrome extension development, and API design.
 
 The extension is ready for use and can be easily extended with real translation APIs, additional languages, and enhanced learning features.
 
